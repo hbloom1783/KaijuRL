@@ -15,6 +15,47 @@ namespace KaijuRL.Map
         w,
         nw,
     }
+    
+    public class FacingArray<T>
+    {
+        public T northEast;
+        public T east;
+        public T southEast;
+        public T southWest;
+        public T west;
+        public T northWest;
+
+        public T this[Facing index]
+        {
+            get
+            {
+                switch (index)
+                {
+                    case Facing.ne: return northEast;
+                    case Facing.e: return east;
+                    case Facing.se: return southEast;
+                    case Facing.sw: return southWest;
+                    case Facing.w: return west;
+                    case Facing.nw: return northWest;
+                    default: return default(T);
+                }
+            }
+
+            set
+            {
+                switch(index)
+                {
+                    case Facing.ne: northEast = value; break;
+                    case Facing.e: east = value; break;
+                    case Facing.se: southEast = value; break;
+                    case Facing.sw: southWest = value; break;
+                    case Facing.w: west = value; break;
+                    case Facing.nw: northWest = value; break;
+                }
+            }
+        }
+
+    }
 
     public static class FacingMethods
     {

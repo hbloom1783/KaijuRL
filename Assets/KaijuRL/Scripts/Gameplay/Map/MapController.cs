@@ -135,69 +135,6 @@ namespace KaijuRL.Map
         }
 
         #endregion
-
-        #region Geometry
         
-        public List<MapCell> DrawArc(
-            PointyHexPoint origin, 
-            Facing startAngle, 
-            Facing endAngle, 
-            int minRadius, 
-            int maxRadius)
-        {
-
-            List<MapCell> result = new List<MapCell>();
-
-            Action<PointyHexPoint> TryAdd = (point) =>
-            {
-                if (mapGrid.Contains(point)) result.Add(mapGrid[point]);
-            };
-
-            for (int radius = minRadius; radius <= maxRadius; radius++)
-            {
-                PointyHexPoint cursor = origin + (startAngle.Offset() * radius);
-                PointyHexPoint finish = origin + (endAngle.Offset() * radius);
-                Facing facing = startAngle.CW(2);
-
-                while (cursor != finish)
-                {
-                    for (int step = 0; step < radius; step++)
-                    {
-                        TryAdd(cursor);
-                        cursor += facing.Offset();
-                    }
-
-                    facing = facing.CW();
-                }
-
-                TryAdd(cursor);
-            }
-
-            return result;
-        }
-
-        public List<MapCell> DrawLine(
-            PointyHexPoint src,
-            PointyHexPoint dst)
-        {
-            List<MapCell> result = new List<MapCell>();
-
-            Action<PointyHexPoint> TryAdd = (point) =>
-            {
-                if (mapGrid.Contains(point)) result.Add(mapGrid[point]);
-            };
-
-            int steps = src.DistanceFrom(dst);
-            float lerpStep = 1.0f / steps;
-
-            for (int step = 0; step <= steps; step++)
-            {
-                TryAdd(Map[Vector3.Lerp(Map[src], Map[dst], lerpStep * step)]);
-            }
-
-            return result;
-        }
-
-        #endregion
     }
 }

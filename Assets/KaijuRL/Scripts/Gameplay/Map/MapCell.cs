@@ -55,7 +55,7 @@ namespace KaijuRL.Map
             }
         }
 
-        private Visibility _visibility = Visibility.fogOfWar;
+        private Visibility _visibility = Visibility.darkness;
         public Visibility visibility
         {
             get
@@ -106,6 +106,11 @@ namespace KaijuRL.Map
                 case Visibility.fogOfWar: Color = Color.gray; break;
                 case Visibility.visible: Color = Color.white; break;
             }
+
+            if (visibility == Visibility.visible)
+                mobilesPresent.ForEach(x => x.spriteRenderer.enabled = true);
+            else
+                mobilesPresent.ForEach(x => x.spriteRenderer.enabled = false);
         }
 
         public override void SetAngle(float angle)

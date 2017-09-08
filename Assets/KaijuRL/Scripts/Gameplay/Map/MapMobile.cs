@@ -5,11 +5,19 @@ using UnityEngine;
 
 namespace KaijuRL.Map
 {
+    [System.Serializable]
+    public class FacingSprites : FacingArray<Sprite>
+    {
+
+    }
+
     [AddComponentMenu("KaijuRL/Map/Map Mobile")]
     [RequireComponent(typeof(SpriteRenderer))]
     public class MapMobile : MonoBehaviour
     {
         public bool occupiesSpace = true;
+
+        public FacingSprites facingSprites;
 
         private SpriteRenderer _spriteRenderer = null;
         public SpriteRenderer spriteRenderer
@@ -20,6 +28,28 @@ namespace KaijuRL.Map
                 return _spriteRenderer;
             }
         }
+
+        private Facing _facing;
+        public Facing facing
+        {
+            get
+            {
+                return _facing;
+            }
+
+            set
+            {
+                _facing = value;
+                UpdatePresentation();
+            }
+        }
+
+        public void UpdatePresentation()
+        {
+            spriteRenderer.sprite = facingSprites[facing];
+        }
+
+        #region MapCell predicates
 
         public bool CanSpawn(MapCell cell)
         {
@@ -42,16 +72,6 @@ namespace KaijuRL.Map
             return cell.type != TerrainType.mountain;
         }
 
-        // Use this for initialization
-        void Start()
-        {
-
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
+        #endregion
     }
 }

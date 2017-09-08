@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using KaijuRL.Map;
@@ -6,8 +7,10 @@ using KaijuRL.Map;
 namespace KaijuRL.Actors
 {
     [RequireComponent(typeof(MapMobile))]
-    public abstract class Actor : MonoBehaviour
+    public abstract class Actor : MonoBehaviour, IComparable<Actor>
     {
+        public int ctSpeed = 10;
+
         private MapMobile _mapMobile = null;
         public MapMobile mapMobile
         {
@@ -18,6 +21,38 @@ namespace KaijuRL.Actors
             }
         }
 
-        public abstract bool TakeTurn();
+        private MapController _mapController = null;
+        public MapController mapController
+        {
+            get
+            {
+                if (_mapController == null) _mapController = GetComponentInParent<MapController>();
+                return _mapController;
+            }
+        }
+
+        private TurnController _turnController = null;
+        public TurnController turnController
+        {
+            get
+            {
+                if (_turnController == null) _turnController = GetComponentInParent<TurnController>();
+                return _turnController;
+            }
+        }
+
+        public abstract void TakeTurn();
+        
+        public int ct;
+
+        public void Start()
+        {
+            turnController.RegisterActor(this);
+        }
+
+        public int CompareTo(Actor other)
+        {
+            return ct - other.ct;
+        }
     }
 }

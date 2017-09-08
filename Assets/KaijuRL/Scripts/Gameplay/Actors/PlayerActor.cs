@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Profiling;
 using Gamelogic.Grids;
 using KaijuRL.Map;
 using KaijuRL.Extensions;
@@ -14,77 +15,44 @@ namespace KaijuRL.Actors
     {
         public int visionRange = 5;
 
-        public Facing facing
-        {
-            get
-            {
-                return facingIndicator.facing;
-            }
-
-            set
-            {
-                facingIndicator.facing = value;
-                UpdatePresentation();
-            }
-        }
-
-        private MapController _mapController = null;
-        public MapController mapController
-        {
-            get
-            {
-                if (_mapController == null) _mapController = GetComponentInParent<MapController>();
-                return _mapController;
-            }
-        }
-
-        private FacingIndicator _facingIndicator = null;
-        public FacingIndicator facingIndicator
-        {
-            get
-            {
-                if (_facingIndicator == null) _facingIndicator = GetComponentInChildren<FacingIndicator>();
-                return _facingIndicator;
-            }
-        }
-
         private void UpdatePresentation()
         {
+            Profiler.BeginSample("UpdatePresentation");
+
             Camera.main.transform.position = new Vector3(
                 mapMobile.transform.position.x,
                 mapMobile.transform.position.y,
                 Camera.main.transform.position.z);
 
-            if ((facing == Facing.sw) || (facing == Facing.w) || (facing == Facing.nw))
-                mapMobile.spriteRenderer.flipX = true;
-            else
-                mapMobile.spriteRenderer.flipX = false;
+            Profiler.EndSample();
         }
 
         private void UpdateVisibility()
         {
+            Profiler.BeginSample("UpdateVisibility");
+
+            Profiler.BeginSample("Clear Old");
             foreach (PointyHexPoint point in mapController.mapGrid.WhereCell(x => x.visibility == Visibility.visible))
             {
                 mapController.mapGrid[point].visibility = Visibility.fogOfWar;
             }
+            Profiler.EndSample();
 
+            Profiler.BeginSample("Find Mobile");
             PointyHexPoint mobLoc = mapController.WhereIs(mapMobile);
+            Profiler.EndSample();
 
-            /*List<MapCell> visionArc = mapController.DrawArc(
-                mobLoc,
-                facing.CCW(2),
-                facing.CW(2),
-                visionRange,
-                visionRange);*/
-
+            Profiler.BeginSample("Compute Edge Arc");
             List<PointyHexPoint> visionArc = mapController.Map.GetArc(
                 mobLoc,
-                facing.CCW(2),
-                facing.CW(2),
+                mapMobile.facing.CCW(2),
+                mapMobile.facing.CW(2),
                 visionRange,
                 visionRange);
+            Profiler.EndSample();
 
-            foreach(PointyHexPoint arcPoint in visionArc)
+            Profiler.BeginSample("Raytrace");
+            foreach (PointyHexPoint arcPoint in visionArc)
             {
                 Func<PointyHexPoint, bool> CanSee = point =>
                 {
@@ -94,62 +62,46 @@ namespace KaijuRL.Actors
                         return false;
                 };
 
+                Profiler.BeginSample("Compute Line");
                 List<PointyHexPoint> lineOfSight = mapController.Map.GetLine(mobLoc, arcPoint);
+                Profiler.EndSample();
 
+                Profiler.BeginSample("Mark until blocked");
                 foreach (PointyHexPoint linePoint in lineOfSight.TakeWhile(CanSee).ToList())
                 {
                     mapController.mapGrid[linePoint].visibility = Visibility.visible;
                 }
+                Profiler.EndSample();
 
+                Profiler.BeginSample("Compute leftovers");
                 List<PointyHexPoint> leftovers = lineOfSight.SkipWhile(CanSee).ToList();
+                Profiler.EndSample();
 
+                Profiler.BeginSample("Mark leftovers");
                 if (leftovers.Count > 0)
                 {
                     if (mapController.mapGrid.Contains(leftovers.First()))
                         mapController.mapGrid[leftovers.First()].visibility = Visibility.visible;
                 }
-                
+                Profiler.EndSample();
             }
+            Profiler.EndSample();
 
-            /*foreach (MapCell arcCell in visionArc)
-            {
-                PointyHexPoint cellLoc = mapController.WhereIs(arcCell);
-
-                mapController.Map.GetLine(mobLoc, cellLoc);
-
-                List<MapCell> lineOfSight = mapController.DrawLine(mobLoc, cellLoc);
-                lineOfSight.Remove(cell);
-
-                if (lineOfSight.TrueForAll(mapMobile.CanSeeThru))
-                {
-                    cell.visibility = Visibility.visible;
-                }
-
-                foreach(MapCell cell in lineOfSight.TakeWhile(mapMobile.CanSeeThru))
-                {
-                    cell.visibility = Visibility.visible;
-                }
-            }*/
+            Profiler.EndSample();
         }
 
         // Use this for initialization
-        void Start()
+        new void Start()
         {
+            base.Start();
             UpdatePresentation();
             UpdateVisibility();
         }
 
-        // Update is called once per frame
-        void Update()
+        public override void TakeTurn()
         {
-            TakeTurn();
-        }
-
-        public override bool TakeTurn()
-        {
+            Profiler.BeginSample("PlayerActor");
             PointyHexPoint oldLoc = mapController.WhereIs(mapMobile);
-
-            bool result = false;
 
             Action<MapMobile, PointyHexPoint> TryMove = (mobile, point) =>
             {
@@ -159,46 +111,46 @@ namespace KaijuRL.Actors
                     mapController.PlaceMobile(mobile, point);
                     UpdatePresentation();
 
-                    result = true;
+                    ct = 100;
                 }
             };
             
             // Turn Left
             if (Input.GetKeyDown(KeyCode.A))
             {
-                facing = facing.CCW();
-                result = true;
+                mapMobile.facing = mapMobile.facing.CCW();
+                ct = 40;
             }
 
             // Turn Right
             else if (Input.GetKeyDown(KeyCode.D))
             {
-                facing = facing.CW();
-                result = true;
+                mapMobile.facing = mapMobile.facing.CW();
+                ct = 40;
             }
 
             // Forward
             else if (Input.GetKeyDown(KeyCode.W))
             {
-                TryMove(mapMobile, oldLoc + facing.Offset());
+                TryMove(mapMobile, oldLoc + mapMobile.facing.Offset());
             }
 
             // Backward
             else if (Input.GetKeyDown(KeyCode.S))
             {
-                TryMove(mapMobile, oldLoc - facing.Offset());
+                TryMove(mapMobile, oldLoc - mapMobile.facing.Offset());
             }
 
             // Strafe Left
             else if (Input.GetKeyDown(KeyCode.Q))
             {
-                TryMove(mapMobile, oldLoc + facing.CCW().Offset());
+                TryMove(mapMobile, oldLoc + mapMobile.facing.CCW().Offset());
             }
 
             // Strafe Right
             else if (Input.GetKeyDown(KeyCode.E))
             {
-                TryMove(mapMobile, oldLoc + facing.CW().Offset());
+                TryMove(mapMobile, oldLoc + mapMobile.facing.CW().Offset());
             }
 
             // Quit
@@ -207,12 +159,12 @@ namespace KaijuRL.Actors
                 SceneManager.LoadScene("Main Menu");
             }
 
-            if (result == true)
+            if (ct > 0)
             {
                 UpdateVisibility();
             }
 
-            return result;
+            Profiler.EndSample();
         }
     }
 }
