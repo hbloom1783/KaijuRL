@@ -47,7 +47,7 @@ namespace KaijuRL.Map
 
         public PointyHexPoint WhereIs(MapMobile mobile)
         {
-            PointList<PointyHexPoint> pointList = mapGrid.WhereCell(x => x.mobilesPresent.Contains(mobile)).ToPointList();
+            PointList<PointyHexPoint> pointList = mapGrid.WhereCell(x => x.HasMobile(mobile)).ToPointList();
 
             if (pointList.Count == 1)
                 return pointList[0];
@@ -63,7 +63,7 @@ namespace KaijuRL.Map
 
         public void PlaceMobile(MapMobile mobile, MapCell cell)
         {
-            cell.mobilesPresent.Add(mobile);
+            cell.AddMobile(mobile);
             mobile.transform.position = cell.transform.position;
             mobile.spriteRenderer.sortingOrder = cell.spriteRenderer.sortingOrder + 1;
         }
@@ -75,7 +75,7 @@ namespace KaijuRL.Map
 
         public void UnplaceMobile(MapMobile mobile)
         {
-            mapGrid[WhereIs(mobile)].mobilesPresent.Remove(mobile);
+            mapGrid[WhereIs(mobile)].RemoveMobile(mobile);
         }
 
         #endregion

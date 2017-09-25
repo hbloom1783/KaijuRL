@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using KaijuRL.Map;
 
 namespace KaijuRL.Actors
 {
@@ -10,12 +11,34 @@ namespace KaijuRL.Actors
     {
         List<Actor> actors = new List<Actor>();
 
+        public Actor WhoseTurn()
+        {
+            return actors.Min();
+        }
+
+        public bool IsPlayerTurn()
+        {
+            return actors.Min() is PlayerActor;
+        }
+
+        private void AdvanceTime()
+        {
+        }
+
         void Update()
         {
-            while (actors.Min().ct > 0)
-                actors.ForEach(x => x.ct -= x.ctSpeed);
+            bool done = false;
 
-            actors.Min().TakeTurn();
+            while (!done)
+            {
+                while (WhoseTurn().ct > 0)
+                    actors.ForEach(x => x.ct -= x.ctSpeed);
+
+                WhoseTurn().TakeTurn();
+
+                if (WhoseTurn().mapMobile.visibility == Visibility.visible)
+                    done = true;
+            }
         }
 
         public void RegisterActor(Actor actor)

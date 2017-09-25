@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Gamelogic.Grids;
@@ -28,7 +30,43 @@ namespace KaijuRL.Map
         public Sprite waterSprite;
         public Sprite mountainSprite;
 
-        public List<MapMobile> mobilesPresent = new List<MapMobile>();
+        private List<MapMobile> mobilesPresent = new List<MapMobile>();
+
+        #region MobilesPresent
+
+        public void AddMobile(MapMobile mobile)
+        {
+            mobilesPresent.Add(mobile);
+            __UpdatePresentation(true);
+        }
+
+        public void RemoveMobile(MapMobile mobile)
+        {
+            mobilesPresent.Remove(mobile);
+            __UpdatePresentation(true);
+        }
+
+        public bool HasMobile(MapMobile mobile)
+        {
+            return mobilesPresent.Contains(mobile);
+        }
+
+        public int MobileCount()
+        {
+            return mobilesPresent.Count;
+        }
+
+        public bool AnyMobile(Func<MapMobile, bool> predicate)
+        {
+            return mobilesPresent.Any(predicate);
+        }
+
+        public IEnumerable<MapMobile> MobilesWhere(Func<MapMobile, bool> predicate)
+        {
+            return mobilesPresent.Where(predicate);
+        }
+
+        #endregion
 
         private SpriteRenderer _spriteRenderer = null;
         public SpriteRenderer spriteRenderer

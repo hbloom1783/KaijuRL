@@ -42,12 +42,17 @@ namespace KaijuRL.Actors
         }
 
         public abstract void TakeTurn();
-        
-        public int ct;
+
+        public int ct = 0;
 
         public void Start()
         {
             turnController.RegisterActor(this);
+        }
+
+        private void OnDestroy()
+        {
+            turnController.UnregisterActor(this);
         }
 
         public int CompareTo(Actor other)

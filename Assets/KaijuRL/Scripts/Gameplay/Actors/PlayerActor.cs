@@ -7,6 +7,8 @@ using UnityEngine.Profiling;
 using Gamelogic.Grids;
 using KaijuRL.Map;
 using KaijuRL.Extensions;
+using KaijuRL.Actors.Actions;
+using KaijuRL.UI;
 
 namespace KaijuRL.Actors
 {
@@ -14,18 +16,6 @@ namespace KaijuRL.Actors
     public class PlayerActor : Actor
     {
         public int visionRange = 5;
-
-        private void UpdatePresentation()
-        {
-            Profiler.BeginSample("UpdatePresentation");
-
-            Camera.main.transform.position = new Vector3(
-                mapMobile.transform.position.x,
-                mapMobile.transform.position.y,
-                Camera.main.transform.position.z);
-
-            Profiler.EndSample();
-        }
 
         private void UpdateVisibility()
         {
@@ -90,79 +80,120 @@ namespace KaijuRL.Actors
             Profiler.EndSample();
         }
 
+        private PlayerActionButton GetButton(string buttonName)
+        {
+            List<PlayerActionButton> candidates = FindObjectsOfType<PlayerActionButton>()
+                .Where(x => x.name == buttonName)
+                .ToList();
+
+            if (candidates.Count > 0)
+            {
+                return candidates.First();
+            }
+            else
+            {
+                Debug.Log("Could not find button named " + buttonName);
+                return null;
+            }
+        }
+
+        private ActorAction GetAction(string actionName)
+        {
+            List<ActorAction> candidates = GetComponentsInChildren<ActorAction>()
+                .Where(x => x.name == actionName)
+                .ToList();
+
+            if (candidates.Count > 0)
+            {
+                return candidates.First();
+            }
+            else
+            {
+                Debug.Log("Could not find action named " + actionName + " on actor named " + name);
+                return null;
+            }
+        }
+
+        private void ConnectButton(string buttonName, string actionName)
+        {
+            PlayerActionButton button = GetButton(buttonName);
+            ActorAction action = GetAction(actionName);
+
+            if (button != null)
+            {
+                button.actionToPerform = action;
+            }
+        }
+
+        private void DisconnectButton(string buttonName)
+        {
+            PlayerActionButton button = GetButton(buttonName);
+
+            if (button != null)
+            {
+                button.actionToPerform = null;
+            }
+        }
+
         // Use this for initialization
         new void Start()
         {
             base.Start();
-            UpdatePresentation();
             UpdateVisibility();
+
+            // QWEASD
+            ConnectButton("Turn Left",     "Turn Left Action");
+            ConnectButton("Turn Right",    "Turn Right Action");
+            ConnectButton("Move Forward",  "Move Forward Action");
+            ConnectButton("Move Backward", "Move Backward Action");
+            ConnectButton("Move Left",     "Move Left Action");
+            ConnectButton("Move Right",    "Move Right Action");
+
+            // Hotbar
+            ConnectButton("Hotbar 1",      "Attack Action");
         }
+
+        public void DoAction(string actionName)
+        {
+            DoAction(GetAction(actionName));
+        }
+
+        public void DoAction(ActorAction action)
+        {
+            if (turnController.WhoseTurn() == this)
+            {
+                if (GetComponentsInChildren<ActorAction>().Contains(action))
+                {
+                    if (action.CanPerform())
+                    {
+                        action.Perform();
+                    }
+
+                    if (ct > 0)
+                    {
+                        UpdateVisibility();
+                    }
+                }
+                else
+                {
+                    Debug.Log("Did not contain requested action!");
+                }
+            }
+        }
+
+        public bool acceptInput = false;
 
         public override void TakeTurn()
         {
             Profiler.BeginSample("PlayerActor");
-            PointyHexPoint oldLoc = mapController.WhereIs(mapMobile);
-
-            Action<MapMobile, PointyHexPoint> TryMove = (mobile, point) =>
-            {
-                if (mapController.mapGrid.Contains(point) && mobile.CanEnter(mapController.mapGrid[point]))
-                {
-                    mapController.UnplaceMobile(mobile);
-                    mapController.PlaceMobile(mobile, point);
-                    UpdatePresentation();
-
-                    ct = 100;
-                }
-            };
-            
-            // Turn Left
-            if (Input.GetKeyDown(KeyCode.A))
-            {
-                mapMobile.facing = mapMobile.facing.CCW();
-                ct = 40;
-            }
-
-            // Turn Right
-            else if (Input.GetKeyDown(KeyCode.D))
-            {
-                mapMobile.facing = mapMobile.facing.CW();
-                ct = 40;
-            }
-
-            // Forward
-            else if (Input.GetKeyDown(KeyCode.W))
-            {
-                TryMove(mapMobile, oldLoc + mapMobile.facing.Offset());
-            }
-
-            // Backward
-            else if (Input.GetKeyDown(KeyCode.S))
-            {
-                TryMove(mapMobile, oldLoc - mapMobile.facing.Offset());
-            }
-
-            // Strafe Left
-            else if (Input.GetKeyDown(KeyCode.Q))
-            {
-                TryMove(mapMobile, oldLoc + mapMobile.facing.CCW().Offset());
-            }
-
-            // Strafe Right
-            else if (Input.GetKeyDown(KeyCode.E))
-            {
-                TryMove(mapMobile, oldLoc + mapMobile.facing.CW().Offset());
-            }
 
             // Quit
-            else if (Input.GetKeyDown(KeyCode.Escape))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 SceneManager.LoadScene("Main Menu");
             }
 
-            if (ct > 0)
-            {
-                UpdateVisibility();
-            }
+            acceptInput = !(ct > 0);
 
             Profiler.EndSample();
         }
