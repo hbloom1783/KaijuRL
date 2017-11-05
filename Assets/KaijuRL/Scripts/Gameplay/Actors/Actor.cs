@@ -52,7 +52,8 @@ namespace KaijuRL.Actors
 
         private void OnDestroy()
         {
-            turnController.UnregisterActor(this);
+            if (turnController != null)
+                turnController.UnregisterActor(this);
         }
 
         public int CompareTo(Actor other)

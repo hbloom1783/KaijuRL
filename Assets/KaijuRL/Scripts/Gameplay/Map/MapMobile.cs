@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 using Gamelogic.Grids;
 using Gamelogic.Extensions;
 
@@ -19,6 +20,7 @@ namespace KaijuRL.Map
         public bool occupiesSpace = true;
 
         public FacingSprites facingSprites;
+        public Sprite fogSprite;
 
         private MapController _mapController = null;
         public MapController mapController
@@ -40,6 +42,16 @@ namespace KaijuRL.Map
             }
         }
 
+        private Canvas _uiCanvas = null;
+        public Canvas uiCanvas
+        {
+            get
+            {
+                if (_uiCanvas == null) _uiCanvas = GetComponentInChildren<Canvas>();
+                return _uiCanvas;
+            }
+        }
+
         private Facing _facing;
         public Facing facing
         {
@@ -54,12 +66,19 @@ namespace KaijuRL.Map
                 UpdatePresentation();
             }
         }
-        
+
+        private Visibility _visibility;
         public Visibility visibility
         {
             get
             {
-                return mapController.mapGrid[mapController.WhereIs(this)].visibility;
+                return _visibility;
+            }
+
+            set
+            {
+                _visibility = value;
+                UpdatePresentation();
             }
         }
 
@@ -73,7 +92,23 @@ namespace KaijuRL.Map
 
         public void UpdatePresentation()
         {
-            spriteRenderer.sprite = facingSprites[facing];
+            switch (visibility)
+            {
+                case Visibility.visible:
+                    uiCanvas.enabled = true;
+                    spriteRenderer.enabled = true;
+                    spriteRenderer.sprite = facingSprites[facing];
+                    break;
+                case Visibility.fogOfWar:
+                    uiCanvas.enabled = true;
+                    spriteRenderer.enabled = true;
+                    spriteRenderer.sprite = fogSprite;
+                    break;
+                case Visibility.darkness:
+                    uiCanvas.enabled = false;
+                    spriteRenderer.enabled = false;
+                    break;
+            }
         }
 
         #region Abstract functions
@@ -101,7 +136,8 @@ namespace KaijuRL.Map
 
         public void OnDestroy()
         {
-            mapController.UnplaceMobile(this);
+            if (mapController != null)
+                mapController.UnplaceMobile(this);
         }
     }
 }

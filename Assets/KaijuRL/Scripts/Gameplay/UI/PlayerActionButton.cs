@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Profiling;
 using KaijuRL.Actors;
 using KaijuRL.Actors.Actions;
 
@@ -66,12 +67,25 @@ namespace KaijuRL.UI
             }
         }
 
-        private void UpdatePresentation()
+        public void UpdatePresentation()
         {
             if (actionToPerform != null)
             {
                 image.sprite = actionToPerform.icon;
                 //text.text = hotkey.ToString();
+
+                if (playerActor.myTurn == false)
+                {
+                    button.interactable = false;
+                }
+                else
+                {
+                    button.interactable = actionToPerform.CanPerform();
+                }
+            }
+            else
+            {
+                button.interactable = false;
             }
         }
 
@@ -79,7 +93,7 @@ namespace KaijuRL.UI
         {
             if (actionToPerform != null)
             {
-                playerActor.DoAction(actionToPerform);
+                playerActor.ChooseAction(actionToPerform);
             }
         }
 
@@ -93,19 +107,14 @@ namespace KaijuRL.UI
 
         void Update()
         {
+            Profiler.BeginSample("PlayerActionButton " + name);
+            
             if (Input.GetKeyDown(hotkey) && (button.interactable))
             {
                 DoAction();
             }
 
-            if ((actionToPerform == null) || (playerActor.acceptInput == false))
-            {
-                button.interactable = false;
-            }
-            else
-            {
-                button.interactable = actionToPerform.CanPerform();
-            }
+            Profiler.EndSample();
         }
     }
 }

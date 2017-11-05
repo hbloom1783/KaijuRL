@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Gamelogic.Grids;
 using Random = UnityEngine.Random;
 using KaijuRL.Extensions;
+using System.Collections;
 
 namespace KaijuRL.Map
 {
@@ -33,6 +36,14 @@ namespace KaijuRL.Map
             }
         }
 
+        public MapCell this[PointyHexPoint loc]
+        {
+            get
+            {
+                return (MapCell)Grid[loc];
+            }
+        }
+        
         public PointyHexPoint WhereIs(MapCell cell)
         {
             PointList<PointyHexPoint> pointList = mapGrid.WhereCell(x => x == cell).ToPointList();
@@ -55,6 +66,19 @@ namespace KaijuRL.Map
                 throw new ArgumentOutOfRangeException("mobile", "Count > 1");
             else
                 throw new ArgumentOutOfRangeException("mobile", "Count <= 0");
+        }
+
+        public MapCell CellAt(PointyHexPoint loc)
+        {
+            if (InBounds(loc))
+                return (MapCell)Grid[loc];
+            else
+                return null;
+        }
+
+        public bool InBounds(PointyHexPoint loc)
+        {
+            return Grid.Contains(loc);
         }
 
         #endregion
@@ -135,6 +159,6 @@ namespace KaijuRL.Map
         }
 
         #endregion
-        
+
     }
 }

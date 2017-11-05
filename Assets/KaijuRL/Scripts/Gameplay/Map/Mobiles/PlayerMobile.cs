@@ -2,12 +2,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace KaijuRL.Map
 {
     [AddComponentMenu("KaijuRL/Map/Player Mobile")]
     public class PlayerMobile : MapMobile
     {
+        private Slider _hpBar = null;
+        public Slider hpBar
+        {
+            get
+            {
+                if (_hpBar == null) _hpBar = uiCanvas.GetComponentInChildren<Slider>();
+                return _hpBar;
+            }
+        }
+
         public override bool CanSpawn(MapCell cell)
         {
             if (occupiesSpace && cell.AnyMobile(x => x.occupiesSpace))
@@ -51,6 +62,10 @@ namespace KaijuRL.Map
             hp.OnValueChange += () =>
             {
                 if (hp.Value <= 0) Die();
+                else
+                {
+                    hpBar.value = hp.Value / (float)startingHp;
+                }
             };
         }
 

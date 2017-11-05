@@ -11,17 +11,21 @@ namespace KaijuRL.Actors.Actions
     public class AttackAction : ActorAction
     {
         private MapMobile target = null;
+
         public override void Perform()
         {
             if ((target == null) && (MouseInputArea().Count() == 1))
             {
                 AcceptMouseInput(MouseInputArea().First());
             }
-            else if (target != null)
+
+            if (target != null)
             {
                 target.hp.Value -= 50;
                 actor.ct += cost;
             }
+
+            target = null;
         }
 
         private List<PointyHexPoint> attackRange
@@ -43,18 +47,21 @@ namespace KaijuRL.Actors.Actions
             return MouseInputArea().Count() > 0;
         }
 
+        public override bool NeedsMouseInput()
+        {
+            return (target == null) && (MouseInputArea().Count() != 1);
+        }
+
         public override IEnumerable<PointyHexPoint> MouseInputArea()
         {
             return attackRange
-                .Where(x => actor.mapController.mapGrid[x]
+                .Where(x => actor.mapController.InBounds(x) && actor.mapController.CellAt(x)
                     .AnyMobile(actor.mapMobile.IsHostile));
         }
 
         public override void AcceptMouseInput(PointyHexPoint input)
         {
-            target = actor.mapController.mapGrid[input].MobilesWhere(actor.mapMobile.IsHostile).First();
-            Perform();
-            target = null;
+            target = actor.mapController.CellAt(input).MobilesWhere(actor.mapMobile.IsHostile).First();
         }
     }
 }

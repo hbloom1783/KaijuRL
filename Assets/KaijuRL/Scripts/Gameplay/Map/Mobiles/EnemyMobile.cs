@@ -2,12 +2,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace KaijuRL.Map
 {
     [AddComponentMenu("KaijuRL/Map/Enemy Mobile")]
     public class EnemyMobile : MapMobile
     {
+        private Slider _hpBar = null;
+        public Slider hpBar
+        {
+            get
+            {
+                if (_hpBar == null) _hpBar = uiCanvas.GetComponentInChildren<Slider>();
+                return _hpBar;
+            }
+        }
+
         public override bool CanSpawn(MapCell cell)
         {
             if (occupiesSpace && cell.AnyMobile(x => x.occupiesSpace))
@@ -51,7 +62,10 @@ namespace KaijuRL.Map
             hp.OnValueChange += () =>
             {
                 if (hp.Value <= 0) Die();
-                else spriteRenderer.color = new Color(1, 1, 1, ((float)hp.Value / (float)startingHp));
+                else
+                {
+                    hpBar.value = hp.Value / (float)startingHp;
+                }
             };
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 using KaijuRL.Map;
 using Gamelogic.Grids;
 
@@ -42,14 +43,29 @@ namespace KaijuRL.Actors.Actions
             PointyHexPoint dst = destination;
             actor.mapController.UnplaceMobile(actor.mapMobile);
             actor.mapController.PlaceMobile(actor.mapMobile, dst);
-            actor.ct += actor.mapMobile.CostToEnter(actor.mapController.mapGrid[destination]);
+            actor.ct += actor.mapMobile.CostToEnter(actor.mapController.CellAt(destination));
         }
 
         public override bool CanPerform()
         {
-            return actor.mapController.mapGrid.Contains(destination) &&
-                actor.mapMobile.CanEnter(actor.mapController.mapGrid[destination]) &&
-                (actor.mapMobile.CostToEnter(actor.mapController.mapGrid[destination]) > 0);
+            Profiler.BeginSample("MoveAction.CanPerform");
+
+            Profiler.BeginSample("Contains");
+            if (!actor.mapController.InBounds(destination)) return false;
+            Profiler.EndSample();
+
+            Profiler.BeginSample("Lookup");
+            MapCell destCell = actor.mapController.CellAt(destination);
+            Profiler.EndSample();
+
+            Profiler.EndSample();
+
+            return actor.mapMobile.CanEnter(destCell) && (actor.mapMobile.CostToEnter(destCell) > 0);
+        }
+
+        public override bool NeedsMouseInput()
+        {
+            return false;
         }
 
         public override IEnumerable<PointyHexPoint> MouseInputArea()

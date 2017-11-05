@@ -41,6 +41,8 @@ namespace KaijuRL.Actors.Actions
 
         public abstract void Perform();
         public abstract bool CanPerform();
+
+        public abstract bool NeedsMouseInput();
         public abstract IEnumerable<PointyHexPoint> MouseInputArea();
         public abstract void AcceptMouseInput(PointyHexPoint input);
     }

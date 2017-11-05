@@ -24,7 +24,7 @@ namespace KaijuRL.Actors
             Profiler.BeginSample("Clear Old");
             foreach (PointyHexPoint point in mapController.mapGrid.WhereCell(x => x.visibility == Visibility.visible))
             {
-                mapController.mapGrid[point].visibility = Visibility.fogOfWar;
+                mapController.CellAt(point).visibility = Visibility.fogOfWar;
             }
             Profiler.EndSample();
 
@@ -153,35 +153,76 @@ namespace KaijuRL.Actors
             ConnectButton("Hotbar 1",      "Attack Action");
         }
 
-        public void DoAction(string actionName)
+        private ActorAction chosenAction = null;
+
+        List<CellTint> activeTints = null;
+
+        public void ChooseAction(ActorAction action)
         {
-            DoAction(GetAction(actionName));
+            if (activeTints != null)
+            {
+                activeTints.ForEach(x => DestroyImmediate(x));
+                activeTints = null;
+            }
+
+            if (action == null)
+            {
+                chosenAction = null;
+            }
+            else if (GetComponentsInChildren<ActorAction>().Contains(action))
+            {
+                chosenAction = action;
+
+                activeTints = chosenAction.MouseInputArea()
+                    .Select(x => mapController[x])
+                    .Select(x => x.gameObject.AddComponent<CellTint>())
+                    .ToList();
+            }
+            else
+            {
+                Debug.Log("Did not contain requested action!");
+            }
         }
 
-        public void DoAction(ActorAction action)
+        private void HandleMouseInput()
         {
-            if (turnController.WhoseTurn() == this)
+            PointyHexPoint mouse = mapController.MousePosition;
+            if (chosenAction.MouseInputArea().Contains(mouse))
             {
-                if (GetComponentsInChildren<ActorAction>().Contains(action))
-                {
-                    if (action.CanPerform())
-                    {
-                        action.Perform();
-                    }
+                chosenAction.AcceptMouseInput(mouse);
+            }
+        }
 
-                    if (ct > 0)
-                    {
-                        UpdateVisibility();
-                    }
-                }
-                else
+        private void DoAction(ActorAction action)
+        {
+            if (myTurn)
+            {
+                if (action.CanPerform())
                 {
-                    Debug.Log("Did not contain requested action!");
+                    action.Perform();
+                    UpdateVisibility();
+                    UpdateButtons();
                 }
             }
         }
 
-        public bool acceptInput = false;
+        public bool myTurn
+        {
+            get
+            {
+                return turnController.WhoseTurn() == this;
+            }
+        }
+
+        private void UpdateButtons()
+        {
+            foreach (PlayerActionButton button in FindObjectsOfType<PlayerActionButton>())
+            {
+                button.UpdatePresentation();
+            }
+        }
+        
+        private bool firstRun = true;
 
         public override void TakeTurn()
         {
@@ -193,7 +234,30 @@ namespace KaijuRL.Actors
                 SceneManager.LoadScene("Main Menu");
             }
 
-            acceptInput = !(ct > 0);
+            if (firstRun)
+            {
+                UpdateVisibility();
+                UpdateButtons();
+            }
+
+            if (chosenAction != null)
+            {
+                if (chosenAction.NeedsMouseInput())
+                {
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        HandleMouseInput();
+                    }
+                }
+                
+                if (!chosenAction.NeedsMouseInput())
+                {
+                    DoAction(chosenAction);
+                    ChooseAction(null);
+                }
+            }
+
+            firstRun = !myTurn;
 
             Profiler.EndSample();
         }

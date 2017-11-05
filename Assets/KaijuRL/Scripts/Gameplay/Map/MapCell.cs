@@ -78,6 +78,8 @@ namespace KaijuRL.Map
             }
         }
 
+        #region Presentation Properties
+
         private TerrainType _type = TerrainType.grass;
         public TerrainType type
         {
@@ -108,6 +110,29 @@ namespace KaijuRL.Map
             }
         }
 
+        public override void __UpdatePresentation(bool forceUpdate)
+        {
+            switch (type)
+            {
+                case TerrainType.grass: spriteRenderer.sprite = grassSprite; break;
+                case TerrainType.water: spriteRenderer.sprite = waterSprite; break;
+                case TerrainType.mountain: spriteRenderer.sprite = mountainSprite; break;
+            }
+
+            switch (visibility)
+            {
+                case Visibility.darkness: Color = Color.black; break;
+                case Visibility.fogOfWar: Color = Color.gray; break;
+                case Visibility.visible: Color = Color.white; break;
+            }
+
+            mobilesPresent.ForEach(x => x.visibility = visibility);
+        }
+
+        #endregion
+
+        #region Sprite passthrough
+
         public override Color Color
         {
             get
@@ -129,28 +154,6 @@ namespace KaijuRL.Map
             }
         }
 
-        public override void __UpdatePresentation(bool forceUpdate)
-        {
-            switch(type)
-            {
-                case TerrainType.grass: spriteRenderer.sprite = grassSprite; break;
-                case TerrainType.water: spriteRenderer.sprite = waterSprite; break;
-                case TerrainType.mountain: spriteRenderer.sprite = mountainSprite; break;
-            }
-
-            switch(visibility)
-            {
-                case Visibility.darkness: Color = Color.black; break;
-                case Visibility.fogOfWar: Color = Color.gray; break;
-                case Visibility.visible: Color = Color.white; break;
-            }
-
-            if (visibility == Visibility.visible)
-                mobilesPresent.ForEach(x => x.spriteRenderer.enabled = true);
-            else
-                mobilesPresent.ForEach(x => x.spriteRenderer.enabled = false);
-        }
-
         public override void SetAngle(float angle)
         {
             spriteRenderer.transform.SetLocalRotationZ(angle);
@@ -160,6 +163,8 @@ namespace KaijuRL.Map
         {
             spriteRenderer.transform.RotateAroundZ(angle);
         }
+
+        #endregion
 
         // Use this for initialization
         void Start()

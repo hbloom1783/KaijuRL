@@ -33,6 +33,11 @@ namespace KaijuRL.Actors.Actions
             return true;
         }
 
+        public override bool NeedsMouseInput()
+        {
+            return false;
+        }
+
         public override IEnumerable<PointyHexPoint> MouseInputArea()
         {
             return new List<PointyHexPoint>();
