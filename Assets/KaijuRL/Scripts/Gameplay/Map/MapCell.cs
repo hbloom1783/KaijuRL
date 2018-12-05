@@ -22,6 +22,12 @@ namespace KaijuRL.Map
         visible,
     }
 
+    public enum Audibility
+    {
+        inaudible,
+        audible,
+    }
+
     [AddComponentMenu("KaijuRL/Map/Map Cell")]
     [RequireComponent(typeof(SpriteRenderer))]
     public class MapCell : TileCell
@@ -30,9 +36,9 @@ namespace KaijuRL.Map
         public Sprite waterSprite;
         public Sprite mountainSprite;
 
-        private List<MapMobile> mobilesPresent = new List<MapMobile>();
-
         #region MobilesPresent
+
+        private List<MapMobile> mobilesPresent = new List<MapMobile>();
 
         public void AddMobile(MapMobile mobile)
         {
@@ -110,6 +116,21 @@ namespace KaijuRL.Map
             }
         }
 
+        private Audibility _audibility = Audibility.inaudible;
+        public Audibility audibility
+        {
+            get
+            {
+                return _audibility;
+            }
+
+            set
+            {
+                _audibility = value;
+                __UpdatePresentation(true);
+            }
+        }
+
         public override void __UpdatePresentation(bool forceUpdate)
         {
             switch (type)
@@ -127,6 +148,7 @@ namespace KaijuRL.Map
             }
 
             mobilesPresent.ForEach(x => x.visibility = visibility);
+            mobilesPresent.ForEach(x => x.audibility = audibility);
         }
 
         #endregion

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Profiling;
 using KaijuRL.Map;
@@ -20,6 +21,7 @@ namespace KaijuRL.Actors.Actions
     public class MoveAction : ActorAction
     {
         public MoveDirection moveDirection = MoveDirection.foward;
+        public float moveTime = 1.0f;
 
         private PointyHexPoint destination
         {
@@ -40,10 +42,23 @@ namespace KaijuRL.Actors.Actions
 
         public override void Perform()
         {
+            Vector3 oldPos = actor.mapMobile.transform.position;
+            Vector3 newPos = Controllers.map.CellAt(destination).transform.position;
+
             PointyHexPoint dst = destination;
-            actor.mapController.UnplaceMobile(actor.mapMobile);
-            actor.mapController.PlaceMobile(actor.mapMobile, dst);
-            actor.ct += actor.mapMobile.CostToEnter(actor.mapController.CellAt(destination));
+            Controllers.map.UnplaceMobile(actor.mapMobile);
+            Controllers.map.PlaceMobile(actor.mapMobile, dst);
+            actor.ct += actor.mapMobile.CostToEnter(Controllers.map.CellAt(dst));
+
+            if (actor.mapMobile.visibility == Visibility.visible)
+            {
+                MoveAnimation newAnimation = actor.mapMobile.gameObject.AddComponent<MoveAnimation>();
+                newAnimation.oldPos = oldPos;
+                newAnimation.newPos = newPos;
+                newAnimation.maxTime = moveTime;
+
+                Controllers.turn.RegisterAnimation(newAnimation);
+            }
         }
 
         public override bool CanPerform()
@@ -51,11 +66,11 @@ namespace KaijuRL.Actors.Actions
             Profiler.BeginSample("MoveAction.CanPerform");
 
             Profiler.BeginSample("Contains");
-            if (!actor.mapController.InBounds(destination)) return false;
+            if (!Controllers.map.InBounds(destination)) return false;
             Profiler.EndSample();
 
             Profiler.BeginSample("Lookup");
-            MapCell destCell = actor.mapController.CellAt(destination);
+            MapCell destCell = Controllers.map.CellAt(destination);
             Profiler.EndSample();
 
             Profiler.EndSample();
@@ -63,23 +78,12 @@ namespace KaijuRL.Actors.Actions
             return actor.mapMobile.CanEnter(destCell) && (actor.mapMobile.CostToEnter(destCell) > 0);
         }
 
-        public override bool NeedsMouseInput()
+        public override bool NeedsMouseInput
         {
-            return false;
-        }
-
-        public override IEnumerable<PointyHexPoint> MouseInputArea()
-        {
-            List<PointyHexPoint> result = new List<PointyHexPoint>();
-
-            if (CanPerform()) result.Add(destination);
-
-            return result;
-        }
-
-        public override void AcceptMouseInput(PointyHexPoint input)
-        {
-            Perform();
+            get
+            {
+                return false;
+            }
         }
     }
 }

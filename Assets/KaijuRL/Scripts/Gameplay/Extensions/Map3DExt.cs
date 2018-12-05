@@ -41,5 +41,20 @@ namespace KaijuRL.Extensions
 
             return result;
         }
+
+        public static List<PointyHexPoint> GetCircle(
+            this IMap3D<PointyHexPoint> map,
+            PointyHexPoint origin,
+            int minRadius,
+            int maxRadius)
+        {
+            List<PointyHexPoint> result = new List<PointyHexPoint>();
+
+            for (int radius = minRadius; radius <= maxRadius; radius++)
+            {
+            }
+
+            return result;
+        }
     }
 }

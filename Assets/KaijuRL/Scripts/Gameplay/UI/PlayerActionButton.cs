@@ -12,16 +12,6 @@ namespace KaijuRL.UI
     [RequireComponent(typeof(Button))]
     public class PlayerActionButton : MonoBehaviour
     {
-        private PlayerActor _playerActor = null;
-        public PlayerActor playerActor
-        {
-            get
-            {
-                if (_playerActor == null) _playerActor = FindObjectOfType<PlayerActor>();
-                return _playerActor;
-            }
-        }
-
         private Button _button = null;
         public Button button
         {
@@ -39,6 +29,16 @@ namespace KaijuRL.UI
             {
                 if (_text == null) _text = GetComponentInChildren<Text>();
                 return _text;
+            }
+        }
+
+        private UIController _uiController = null;
+        public UIController uiController
+        {
+            get
+            {
+                if (_uiController == null) _uiController = GetComponentInParent<UIController>();
+                return _uiController;
             }
         }
 
@@ -69,12 +69,19 @@ namespace KaijuRL.UI
 
         public void UpdatePresentation()
         {
-            if (actionToPerform != null)
+            if (actionToPerform == null)
             {
-                image.sprite = actionToPerform.icon;
-                //text.text = hotkey.ToString();
+                image.color = new Color(0, 0, 0, 0);
+                button.interactable = false;
+                image.sprite = null;
+                
 
-                if (playerActor.myTurn == false)
+                text.CrossFadeAlpha(0, 0, false);
+            }
+            else
+            {
+                image.color = new Color(1,1,1,1);
+                if (uiController.inputActive == false)
                 {
                     button.interactable = false;
                 }
@@ -82,10 +89,11 @@ namespace KaijuRL.UI
                 {
                     button.interactable = actionToPerform.CanPerform();
                 }
-            }
-            else
-            {
-                button.interactable = false;
+                image.sprite = actionToPerform.icon;
+                
+
+                text.CrossFadeAlpha(1, 0, false);
+                //text.text = hotkey.ToString();
             }
         }
 
@@ -93,7 +101,7 @@ namespace KaijuRL.UI
         {
             if (actionToPerform != null)
             {
-                playerActor.ChooseAction(actionToPerform);
+                uiController.ButtonClick(this);
             }
         }
 
@@ -111,7 +119,7 @@ namespace KaijuRL.UI
             
             if (Input.GetKeyDown(hotkey) && (button.interactable))
             {
-                DoAction();
+                uiController.ButtonClick(this);
             }
 
             Profiler.EndSample();

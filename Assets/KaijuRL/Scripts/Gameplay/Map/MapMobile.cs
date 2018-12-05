@@ -20,17 +20,7 @@ namespace KaijuRL.Map
         public bool occupiesSpace = true;
 
         public FacingSprites facingSprites;
-        public Sprite fogSprite;
-
-        private MapController _mapController = null;
-        public MapController mapController
-        {
-            get
-            {
-                if (_mapController == null) _mapController = GetComponentInParent<MapController>();
-                return _mapController;
-            }
-        }
+        public Sprite audioSprite;
 
         private SpriteRenderer _spriteRenderer = null;
         public SpriteRenderer spriteRenderer
@@ -82,32 +72,51 @@ namespace KaijuRL.Map
             }
         }
 
+        private Audibility _audibility;
+        public Audibility audibility
+        {
+            get
+            {
+                return _audibility;
+            }
+
+            set
+            {
+                _audibility = value;
+                UpdatePresentation();
+            }
+        }
+
         public PointyHexPoint location
         {
             get
             {
-                return mapController.WhereIs(this);
+                return Controllers.map.WhereIs(this);
             }
         }
 
         public void UpdatePresentation()
         {
-            switch (visibility)
+            if (visibility == Visibility.visible)
             {
-                case Visibility.visible:
-                    uiCanvas.enabled = true;
-                    spriteRenderer.enabled = true;
-                    spriteRenderer.sprite = facingSprites[facing];
-                    break;
-                case Visibility.fogOfWar:
-                    uiCanvas.enabled = true;
-                    spriteRenderer.enabled = true;
-                    spriteRenderer.sprite = fogSprite;
-                    break;
-                case Visibility.darkness:
-                    uiCanvas.enabled = false;
-                    spriteRenderer.enabled = false;
-                    break;
+                uiCanvas.enabled = true;
+                spriteRenderer.enabled = true;
+                spriteRenderer.sprite = facingSprites[facing];
+            }
+            else
+            {
+                switch (audibility)
+                {
+                    case Audibility.audible:
+                        uiCanvas.enabled = true;
+                        spriteRenderer.enabled = true;
+                        spriteRenderer.sprite = audioSprite;
+                        break;
+                    case Audibility.inaudible:
+                        uiCanvas.enabled = false;
+                        spriteRenderer.enabled = false;
+                        break;
+                }
             }
         }
 
@@ -136,8 +145,8 @@ namespace KaijuRL.Map
 
         public void OnDestroy()
         {
-            if (mapController != null)
-                mapController.UnplaceMobile(this);
+            if (Controllers.map != null)
+                Controllers.map.UnplaceMobile(this);
         }
     }
 }

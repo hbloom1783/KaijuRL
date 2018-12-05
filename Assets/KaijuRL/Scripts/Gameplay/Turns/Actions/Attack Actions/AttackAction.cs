@@ -47,21 +47,24 @@ namespace KaijuRL.Actors.Actions
             return MouseInputArea().Count() > 0;
         }
 
-        public override bool NeedsMouseInput()
+        public override bool NeedsMouseInput
         {
-            return (target == null) && (MouseInputArea().Count() != 1);
+            get
+            {
+                return (target == null);
+            }
         }
 
         public override IEnumerable<PointyHexPoint> MouseInputArea()
         {
             return attackRange
-                .Where(x => actor.mapController.InBounds(x) && actor.mapController.CellAt(x)
+                .Where(x => Controllers.map.InBounds(x) && Controllers.map.CellAt(x)
                     .AnyMobile(actor.mapMobile.IsHostile));
         }
 
         public override void AcceptMouseInput(PointyHexPoint input)
         {
-            target = actor.mapController.CellAt(input).MobilesWhere(actor.mapMobile.IsHostile).First();
+            target = Controllers.map.CellAt(input).MobilesWhere(actor.mapMobile.IsHostile).First();
         }
     }
 }

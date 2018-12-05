@@ -17,7 +17,7 @@ namespace KaijuRL.Map
         public int count;
     }
 
-    [AddComponentMenu("KaijuRL/Map/Map Generator")]
+    [AddComponentMenu("KaijuRL/Map/Map Controller")]
     [RequireComponent(typeof(PointyHexTileGridBuilder))]
     public class MapController : GridBehaviour<PointyHexPoint>
     {
